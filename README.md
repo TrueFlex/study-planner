@@ -1,5 +1,7 @@
 # Учебный планировщик студента
 
+[![Deploy static site](https://github.com/TrueFlex/study-planner/actions/workflows/deploy.yml/badge.svg)](https://github.com/TrueFlex/study-planner/actions/workflows/deploy.yml)
+
 Лендинг веб-сервиса, который собирает задания по всем дисциплинам в один список со сроками сдачи. Учебный проект по курсу «Информатика» (ГУАП, 2026): лабораторные работы 4–6.
 
 **Сайт:** https://trueflex.github.io/study-planner/
@@ -21,12 +23,22 @@
 
 Открыть `index.html` в браузере или опубликованную версию по ссылке выше.
 
+## Публикация (CI/CD)
+
+Workflow `.github/workflows/deploy.yml` в GitHub Actions:
+
+1. `check` – проверяет `index.html` валидатором html-validate при каждом push и pull request в `main`;
+2. `deploy` – после успешной проверки публикует сайт на GitHub Pages, только при push в `main`.
+
+Бейдж вверху показывает результат последнего запуска.
+
 ## История работы
 
 | Работа | Что сделано |
 | --- | --- |
 | ЛР4 | сайт создан по промпту языковой моделью, проверен и исправлен ИИ-агентом (3 правки) |
 | ЛР5 | проект выложен на GitHub; в ветках `feature/photos`, `feature/week-view` и `docs/readme` агент добавил фотографии, вид «Неделя» и это описание; ветки объединены с `main` через pull request; сайт опубликован в GitHub Pages |
+| ЛР6 | публикация переведена на GitHub Actions (`deploy.yml`), добавлены проверка HTML перед публикацией и бейдж статуса; рассмотрен автодеплой на Vercel |
 
 ## Фотографии
 
