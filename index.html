@@ -94,6 +94,18 @@
   .deadline .subj { font-size: 14px; color: var(--ink-soft); }
   .deadline .left { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
   .deadline .date { font-size: 14px; color: var(--ink-soft); text-align: right; }
+  /* фото на главном экране, лист со сроками заходит на него снизу */
+  .hero-visual { position: relative; }
+  .photo-hero img { aspect-ratio: 3 / 2; object-fit: cover; object-position: 50% 62%; }
+  .hero-sheet { margin: -56px 0 0 28px; position: relative; }
+
+  /* ---------- Фотографии ---------- */
+  .photo { margin: 0; }
+  .photo img { display: block; width: 100%; height: auto; border-radius: var(--radius); box-shadow: 0 12px 30px rgba(27, 42, 65, .12); }
+  .photo figcaption { margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+  /* подпись главного фото лежит на самом фото: снизу его перекрывает лист */
+  .photo-hero { position: relative; }
+  .photo-hero figcaption { position: absolute; top: 10px; right: 10px; margin: 0; padding: 2px 8px; border-radius: 6px; background: rgba(27, 42, 65, .7); color: #fff; }
   .left.soon { color: var(--margin-red); }
   .left.late { color: var(--margin-red); text-decoration: underline wavy; }
 
@@ -104,6 +116,8 @@
   /* Проблема: три источника → один список */
   .sources { display: grid; grid-template-columns: repeat(3, 1fr) auto 1.2fr; gap: 16px; align-items: stretch; margin-top: 28px; }
   .arrow, .one-list { align-self: center; }
+  .problem-top { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+  .problem-top p { margin: 0; }
   .source { padding: 18px; border: 2px solid var(--grid); border-radius: var(--radius); background: var(--paper); }
   .source b { display: block; }
   .source small { color: var(--ink-soft); font-size: 15px; }
@@ -127,6 +141,13 @@
   }
   .steps h3 { font-size: 21px; }
   .steps p { color: var(--ink-soft); }
+  /* рядом с фото шаги идут столбиком: номер слева, текст справа */
+  .how-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 48px; align-items: center; margin-top: 24px; }
+  .how-grid .steps { grid-template-columns: 1fr; gap: 22px; margin: 0; }
+  .how-grid .steps li { display: grid; grid-template-columns: 44px 1fr; column-gap: 16px; }
+  .how-grid .steps li::before { grid-row: span 2; margin: 0; }
+  .how-grid .steps h3 { margin: 8px 0 4px; }
+  .how-grid .steps p { margin: 0; }
 
   /* ---------- Демо ---------- */
   .demo { display: grid; grid-template-columns: 340px 1fr; gap: 32px; margin-top: 28px; align-items: start; }
@@ -180,12 +201,14 @@
     .sources { grid-template-columns: 1fr; }
     .arrow { transform: rotate(90deg); }
     .features, .steps { grid-template-columns: 1fr; }
+    .problem-top, .how-grid { grid-template-columns: 1fr; gap: 24px; }
   }
   @media (max-width: 480px) {
     body { font-size: 17px; }
     .sheet { padding: 18px 16px 18px 48px; }
     .sheet::before { left: 34px; }
     .hero { padding-top: 40px; }
+    .hero-sheet { margin: -32px 10px 0; }
     /* в строке задания срок переносим под название, чтобы слова не дробились */
     .task { grid-template-columns: auto 1fr; align-items: start; }
     .task .left { grid-column: 2; text-align: left; font-size: 15px; }
@@ -230,10 +253,18 @@
           <a class="btn btn-ghost" href="#features">Что умеет сервис</a>
         </div>
       </div>
-      <aside class="sheet" aria-label="Пример списка заданий">
-        <div class="sheet-title">Ближайшие сроки</div>
-        <div id="hero-list"></div>
-      </aside>
+      <!-- фото и лист «Ближайшие сроки» лежат внахлест, как на столе -->
+      <div class="hero-visual">
+        <figure class="photo photo-hero">
+          <img src="images/student.jpg" width="800" height="1200" decoding="async" fetchpriority="high"
+               alt="Студентка печатает на ноутбуке в читальном зале, рядом открытые книги">
+          <figcaption>Фото: Yan Krukov, Pexels</figcaption>
+        </figure>
+        <aside class="sheet hero-sheet" aria-label="Пример списка заданий">
+          <div class="sheet-title">Ближайшие сроки</div>
+          <div id="hero-list"></div>
+        </aside>
+      </div>
     </div>
   </section>
 
@@ -241,7 +272,14 @@
   <section class="block alt" id="problem" aria-labelledby="problem-title">
     <div class="wrap">
       <h2 id="problem-title">Задания приходят из трех мест</h2>
-      <p>Лабораторная выложена в личном кабинете, тест – в системе дистанционного обучения, а перенос срока объявили в чате группы. Чтобы ничего не пропустить, приходится каждый день проверять все три.</p>
+      <div class="problem-top">
+        <p>Лабораторная выложена в личном кабинете, тест – в системе дистанционного обучения, а перенос срока объявили в чате группы. Чтобы ничего не пропустить, приходится каждый день проверять все три.</p>
+        <figure class="photo">
+          <img src="images/desk.jpg" width="1200" height="800" loading="lazy" decoding="async"
+               alt="Ноутбук, смартфон и блокнот со списком дел на деревянном столе">
+          <figcaption>Фото: Jessica Lewis, Pexels</figcaption>
+        </figure>
+      </div>
       <div class="sources">
         <div class="source"><b>Личный кабинет</b><small>задания и сроки сдачи отчетов</small></div>
         <div class="source"><b>Система дистанционного обучения</b><small>лекции, тесты, онлайн-курсы</small></div>
@@ -270,11 +308,18 @@
   <section class="block alt" id="how" aria-labelledby="how-title">
     <div class="wrap">
       <h2 id="how-title">Как это работает</h2>
-      <ol class="steps">
-        <li><h3>Добавьте задание</h3><p>Выберите дисциплину, впишите название и срок сдачи из личного кабинета или чата.</p></li>
-        <li><h3>Смотрите, что горит</h3><p>Список сам встает по порядку, а близкие сроки подсвечиваются красным.</p></li>
-        <li><h3>Отмечайте сданное</h3><p>Выполненное уходит вниз и не мешает видеть то, что еще впереди.</p></li>
-      </ol>
+      <div class="how-grid">
+        <figure class="photo">
+          <img src="images/planner.jpg" width="1200" height="798" loading="lazy" decoding="async"
+               alt="Разворот бумажного планера на январь с цветными закладками и маркерами">
+          <figcaption>Фото: Bich Tran, Pexels</figcaption>
+        </figure>
+        <ol class="steps">
+          <li><h3>Добавьте задание</h3><p>Выберите дисциплину, впишите название и срок сдачи из личного кабинета или чата.</p></li>
+          <li><h3>Смотрите, что горит</h3><p>Список сам встает по порядку, а близкие сроки подсвечиваются красным.</p></li>
+          <li><h3>Отмечайте сданное</h3><p>Выполненное уходит вниз и не мешает видеть то, что еще впереди.</p></li>
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -346,7 +391,7 @@
 <!-- 8. Подвал -->
 <footer>
   <div class="wrap">
-    <span>Учебный демонстрационный проект, ГУАП, 2026. Не коммерческий сервис.</span>
+    <span>Учебный демонстрационный проект, ГУАП, 2026. Не коммерческий сервис. Фотографии: Pexels, бесплатная лицензия.</span>
     <a href="#top">Наверх</a>
   </div>
 </footer>
