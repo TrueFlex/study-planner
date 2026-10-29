@@ -85,7 +85,7 @@
   /* ---------- Главный экран ---------- */
   .hero { padding: 72px 0 56px; }
   .hero .wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
-  .hero h1 { font-size: clamp(38px, 6vw, 64px); letter-spacing: -.02em; }
+  .hero h1 { font-size: clamp(36px, 4.6vw, 56px); letter-spacing: -.02em; }
   .hero .lead { font-size: 21px; color: var(--ink-soft); }
   .hero .actions { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
   .sheet-title { font-weight: 800; margin-bottom: 12px; }
@@ -102,7 +102,8 @@
   .block.alt { background: var(--sheet); border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); }
 
   /* Проблема: три источника → один список */
-  .sources { display: grid; grid-template-columns: repeat(3, 1fr) auto 1.2fr; gap: 16px; align-items: center; margin-top: 28px; }
+  .sources { display: grid; grid-template-columns: repeat(3, 1fr) auto 1.2fr; gap: 16px; align-items: stretch; margin-top: 28px; }
+  .arrow, .one-list { align-self: center; }
   .source { padding: 18px; border: 2px solid var(--grid); border-radius: var(--radius); background: var(--paper); }
   .source b { display: block; }
   .source small { color: var(--ink-soft); font-size: 15px; }
@@ -222,17 +223,17 @@
   <section class="hero" aria-labelledby="hero-title">
     <div class="wrap">
       <div>
-        <h1 id="hero-title">Все сроки сдачи – в одном списке</h1>
+        <h1 id="hero-title">Все сроки сдачи&nbsp;– в&nbsp;одном списке</h1>
         <p class="lead">Учебный планировщик собирает задания по всем дисциплинам в одном месте и показывает, сколько дней осталось до каждого срока.</p>
         <div class="actions">
           <a class="btn" href="#demo">Попробовать демо</a>
           <a class="btn btn-ghost" href="#features">Что умеет сервис</a>
         </div>
       </div>
-      <div class="sheet" aria-label="Пример списка заданий">
+      <aside class="sheet" aria-label="Пример списка заданий">
         <div class="sheet-title">Ближайшие сроки</div>
         <div id="hero-list"></div>
-      </div>
+      </aside>
     </div>
   </section>
 
@@ -425,7 +426,7 @@
       return '<li class="task' + (t.done ? ' is-done' : '') + '">' +
         '<input type="checkbox" data-id="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Сдано: ' + esc(t.title) + '">' +
         '<div><div class="title">' + esc(t.title) + '</div><div class="meta">' + esc(t.subject) + ', до ' + fmt.format(t.date) + '</div></div>' +
-        '<div class="' + leftClass(n) + '">' + (t.done ? 'сдано' : leftText(n)) + '</div></li>';
+        '<div class="' + (t.done ? 'left' : leftClass(n)) + '">' + (t.done ? 'сдано' : leftText(n)) + '</div></li>';
     }).join('');
     list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', () => {
       const id = Number(cb.dataset.id);
