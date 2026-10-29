@@ -169,7 +169,12 @@
 
   /* ---------- Адаптивность ---------- */
   @media (max-width: 900px) {
-    nav { display: none; }
+    /* меню не прячем: оно уходит второй строкой под логотип и прокручивается вбок */
+    :root { --header-h: 96px; }
+    header .wrap { flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; }
+    nav { width: 100%; overflow-x: auto; scrollbar-width: none; }
+    nav ul { gap: 14px; padding-bottom: 4px; }
+    nav a { white-space: nowrap; font-size: 15px; }
     .hero .wrap, .demo { grid-template-columns: 1fr; }
     .sources { grid-template-columns: 1fr; }
     .arrow { transform: rotate(90deg); }
@@ -180,9 +185,16 @@
     .sheet { padding: 18px 16px 18px 48px; }
     .sheet::before { left: 34px; }
     .hero { padding-top: 40px; }
+    /* в строке задания срок переносим под название, чтобы слова не дробились */
+    .task { grid-template-columns: auto 1fr; align-items: start; }
+    .task .left { grid-column: 2; text-align: left; font-size: 15px; }
   }
+  /* новое задание коротко подсвечивается маркером */
+  .task.is-new { animation: marker 2s ease-out; }
+  @keyframes marker { from { background: var(--marker); } to { background: transparent; } }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
+    .task.is-new { animation: none; background: rgba(255, 225, 90, .45); }
   }
 </style>
 </head>
@@ -195,7 +207,7 @@
     <nav aria-label="Разделы страницы">
       <ul>
         <li><a href="#problem">Зачем</a></li>
-        <li><a href="#features">Возможности</a></li>
+        <li><a href="#features">Функции</a></li>
         <li><a href="#demo">Демо</a></li>
         <li><a href="#plan">План</a></li>
         <li><a href="#faq">Вопросы</a></li>
@@ -442,10 +454,17 @@
     const [y, m, d] = dateInput.value.split('-').map(Number);
     const task = { id: nextId++, subject: document.getElementById('f-subject').value, title, date: new Date(y, m - 1, d), done: false };
     tasks.push(task);
+    // если включен фильтр другой дисциплины, новое задание было бы скрыто
+    if (filter !== 'Все' && filter !== task.subject) filter = 'Все';
     e.target.reset();
     dateInput.value = toISO(addDays(7));
     render();
     announce('Добавлено: ' + task.title + ', срок ' + fmt.format(task.date));
+    // на телефоне список ниже формы: прокручиваем к новому заданию и подсвечиваем его
+    const row = document.querySelector('#task-list input[data-id="' + task.id + '"]').closest('.task');
+    row.classList.add('is-new');
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    row.scrollIntoView({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' });
   });
 
   // ---------- План: отмечаем текущий этап ----------
