@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Учебный планировщик студента – все сроки сдачи в одном списке</title>
+<meta name="description" content="Учебный планировщик собирает задания из личного кабинета, системы дистанционного обучения и чата группы в один список со сроками. Учебный демонстрационный проект.">
+<style>
+  /* ---------- Цвета и размеры ---------- */
+  :root {
+    --paper: #F7F9FC;      /* фон страницы */
+    --sheet: #FFFFFF;      /* лист тетради */
+    --grid: #E2E8F1;       /* клетка */
+    --ink: #1B2A41;        /* основной текст, «чернила» */
+    --ink-soft: #4A5A70;   /* второстепенный текст */
+    --margin-red: #E5484D; /* красные поля тетради, срочные сроки */
+    --marker: #FFE15A;     /* маркер-выделитель */
+    --done: #1F8A5B;       /* выполнено */
+    --radius: 10px;
+    --header-h: 64px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 18px;
+    line-height: 1.55;
+  }
+  h1, h2, h3 { line-height: 1.15; margin: 0 0 .5em; }
+  h2 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -.01em; }
+  p { margin: 0 0 1em; max-width: 62ch; }
+  a { color: inherit; }
+  section { scroll-margin-top: calc(var(--header-h) + 16px); }
+  .wrap { width: min(1120px, 100% - 40px); margin: 0 auto; }
+
+  /* видимый фокус для клавиатуры */
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+
+  /* ---------- Шапка ---------- */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    height: var(--header-h);
+    background: rgba(247, 249, 252, .92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--grid);
+  }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; height: 100%; gap: 16px; }
+  .logo { font-weight: 800; text-decoration: none; font-size: 19px; white-space: nowrap; }
+  .logo span { background: linear-gradient(transparent 55%, var(--marker) 55%); }
+  nav ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; }
+  nav a { text-decoration: none; font-size: 16px; color: var(--ink-soft); }
+  nav a:hover { color: var(--ink); text-decoration: underline; }
+
+  /* ---------- Кнопки ---------- */
+  .btn {
+    display: inline-block; padding: 14px 22px; border-radius: var(--radius);
+    background: var(--ink); color: #fff; text-decoration: none; font-weight: 700;
+    border: 2px solid var(--ink); cursor: pointer; font-size: 17px;
+  }
+  .btn:hover { background: #26395A; }
+  .btn-ghost { background: transparent; color: var(--ink); }
+  .btn-ghost:hover { background: var(--sheet); }
+
+  /* ---------- Лист тетради: главный мотив страницы ---------- */
+  .sheet {
+    position: relative;
+    background-color: var(--sheet);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    border-radius: var(--radius);
+    box-shadow: 0 1px 0 var(--grid), 0 12px 30px rgba(27, 42, 65, .08);
+    padding: 24px 24px 24px 72px;
+  }
+  .sheet::before { /* красные поля */
+    content: ""; position: absolute; top: 0; bottom: 0; left: 52px;
+    width: 2px; background: var(--margin-red); opacity: .75;
+  }
+
+  /* ---------- Главный экран ---------- */
+  .hero { padding: 72px 0 56px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
+  .hero h1 { font-size: clamp(38px, 6vw, 64px); letter-spacing: -.02em; }
+  .hero .lead { font-size: 21px; color: var(--ink-soft); }
+  .hero .actions { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
+  .sheet-title { font-weight: 800; margin-bottom: 12px; }
+  .deadline { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 10px 0; border-bottom: 1px dashed var(--grid); }
+  .deadline:last-child { border-bottom: 0; }
+  .deadline .subj { font-size: 14px; color: var(--ink-soft); }
+  .deadline .left { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+  .deadline .date { font-size: 14px; color: var(--ink-soft); text-align: right; }
+  .left.soon { color: var(--margin-red); }
+  .left.late { color: var(--margin-red); text-decoration: underline wavy; }
+
+  /* ---------- Обычные секции ---------- */
+  .block { padding: 72px 0; }
+  .block.alt { background: var(--sheet); border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); }
+
+  /* Проблема: три источника → один список */
+  .sources { display: grid; grid-template-columns: repeat(3, 1fr) auto 1.2fr; gap: 16px; align-items: center; margin-top: 28px; }
+  .source { padding: 18px; border: 2px solid var(--grid); border-radius: var(--radius); background: var(--paper); }
+  .source b { display: block; }
+  .source small { color: var(--ink-soft); font-size: 15px; }
+  .arrow { font-size: 34px; color: var(--ink-soft); text-align: center; }
+  .one-list { padding: 18px; border-radius: var(--radius); background: var(--marker); font-weight: 700; }
+
+  /* Возможности */
+  .features { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; margin-top: 24px; padding: 0; list-style: none; }
+  .features li { padding: 18px 0; border-top: 1px solid var(--grid); }
+  .features h3 { font-size: 21px; margin-bottom: .25em; }
+  .features p { margin: 0; color: var(--ink-soft); }
+  .badge { font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--ink-soft); color: var(--ink-soft); margin-left: 8px; vertical-align: middle; }
+
+  /* Как это работает: три шага */
+  .steps { counter-reset: step; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 24px; padding: 0; list-style: none; }
+  .steps li { counter-increment: step; }
+  .steps li::before {
+    content: counter(step); display: inline-grid; place-items: center;
+    width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--ink);
+    font-weight: 800; margin-bottom: 12px;
+  }
+  .steps h3 { font-size: 21px; }
+  .steps p { color: var(--ink-soft); }
+
+  /* ---------- Демо ---------- */
+  .demo { display: grid; grid-template-columns: 340px 1fr; gap: 32px; margin-top: 28px; align-items: start; }
+  .demo form { display: grid; gap: 14px; padding: 22px; background: var(--paper); border: 2px solid var(--grid); border-radius: var(--radius); }
+  label { font-weight: 700; font-size: 15px; display: grid; gap: 6px; }
+  input, select {
+    font: inherit; font-size: 17px; padding: 10px 12px; border-radius: 8px;
+    border: 2px solid #C5CFDD; background: #fff; color: var(--ink); width: 100%;
+  }
+  .hint { font-size: 14px; color: var(--ink-soft); margin: 0; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip { font: inherit; font-size: 15px; padding: 6px 12px; border-radius: 99px; border: 2px solid var(--grid); background: #fff; cursor: pointer; color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .tasks { list-style: none; margin: 0; padding: 0; }
+  .task { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--grid); }
+  .task input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--done); }
+  .task .title { font-weight: 700; }
+  .task .meta { font-size: 14px; color: var(--ink-soft); }
+  .task.is-done .title { text-decoration: line-through; color: var(--ink-soft); }
+  .task.is-done .left { color: var(--done); }
+  .empty { color: var(--ink-soft); padding: 12px 0; }
+
+  /* ---------- План разработки ---------- */
+  .timeline { list-style: none; margin: 28px 0 0; padding: 0; border-left: 2px solid var(--margin-red); }
+  .timeline li { position: relative; padding: 0 0 22px 28px; }
+  .timeline li::before { content: ""; position: absolute; left: -8px; top: 6px; width: 14px; height: 14px; border-radius: 50%; background: var(--sheet); border: 2px solid var(--margin-red); }
+  .timeline li.now::before { background: var(--margin-red); }
+  .timeline time { display: block; font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .timeline b { font-size: 19px; }
+
+  /* ---------- Вопросы ---------- */
+  details { border-top: 1px solid var(--grid); padding: 16px 0; max-width: 760px; }
+  details:last-of-type { border-bottom: 1px solid var(--grid); }
+  summary { font-weight: 700; cursor: pointer; font-size: 19px; }
+  details p { margin: 10px 0 0; color: var(--ink-soft); }
+
+  /* ---------- Подвал ---------- */
+  footer { padding: 40px 0; font-size: 15px; color: var(--ink-soft); }
+  footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+  /* ---------- Адаптивность ---------- */
+  @media (max-width: 900px) {
+    nav { display: none; }
+    .hero .wrap, .demo { grid-template-columns: 1fr; }
+    .sources { grid-template-columns: 1fr; }
+    .arrow { transform: rotate(90deg); }
+    .features, .steps { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    body { font-size: 17px; }
+    .sheet { padding: 18px 16px 18px 48px; }
+    .sheet::before { left: 34px; }
+    .hero { padding-top: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Шапка с якорной навигацией -->
+<header>
+  <div class="wrap">
+    <a class="logo" href="#top"><span>Учебный</span> планировщик</a>
+    <nav aria-label="Разделы страницы">
+      <ul>
+        <li><a href="#problem">Зачем</a></li>
+        <li><a href="#features">Возможности</a></li>
+        <li><a href="#demo">Демо</a></li>
+        <li><a href="#plan">План</a></li>
+        <li><a href="#faq">Вопросы</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- 1. Главный экран -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap">
+      <div>
+        <h1 id="hero-title">Все сроки сдачи – в одном списке</h1>
+        <p class="lead">Учебный планировщик собирает задания по всем дисциплинам в одном месте и показывает, сколько дней осталось до каждого срока.</p>
+        <div class="actions">
+          <a class="btn" href="#demo">Попробовать демо</a>
+          <a class="btn btn-ghost" href="#features">Что умеет сервис</a>
+        </div>
+      </div>
+      <div class="sheet" aria-label="Пример списка заданий">
+        <div class="sheet-title">Ближайшие сроки</div>
+        <div id="hero-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Проблема -->
+  <section class="block alt" id="problem" aria-labelledby="problem-title">
+    <div class="wrap">
+      <h2 id="problem-title">Задания приходят из трех мест</h2>
+      <p>Лабораторная выложена в личном кабинете, тест – в системе дистанционного обучения, а перенос срока объявили в чате группы. Чтобы ничего не пропустить, приходится каждый день проверять все три.</p>
+      <div class="sources">
+        <div class="source"><b>Личный кабинет</b><small>задания и сроки сдачи отчетов</small></div>
+        <div class="source"><b>Система дистанционного обучения</b><small>лекции, тесты, онлайн-курсы</small></div>
+        <div class="source"><b>Чат группы</b><small>переносы, консультации, новости</small></div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="one-list">Один список с понятными сроками</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Возможности -->
+  <section class="block" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <h2 id="features-title">Что будет в первой версии</h2>
+      <ul class="features">
+        <li><h3>Список заданий</h3><p>Дисциплина, название и срок. Задания сортируются по дате сдачи.</p></li>
+        <li><h3>Календарь</h3><p>Сроки на неделю и на месяц: видно, где загруженные недели.</p></li>
+        <li><h3>Фильтры и отметки</h3><p>Можно оставить одну дисциплину и отметить сданное.</p></li>
+        <li><h3>Напоминания <span class="badge">позже</span></h3><p>Письмо на почту за несколько дней до срока.</p></li>
+        <li><h3>Расписание группы <span class="badge">позже</span></h3><p>Занятия и консультации рядом со сроками сдачи.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4. Как это работает -->
+  <section class="block alt" id="how" aria-labelledby="how-title">
+    <div class="wrap">
+      <h2 id="how-title">Как это работает</h2>
+      <ol class="steps">
+        <li><h3>Добавьте задание</h3><p>Выберите дисциплину, впишите название и срок сдачи из личного кабинета или чата.</p></li>
+        <li><h3>Смотрите, что горит</h3><p>Список сам встает по порядку, а близкие сроки подсвечиваются красным.</p></li>
+        <li><h3>Отмечайте сданное</h3><p>Выполненное уходит вниз и не мешает видеть то, что еще впереди.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 5. Демо -->
+  <section class="block" id="demo" aria-labelledby="demo-title">
+    <div class="wrap">
+      <h2 id="demo-title">Попробуйте прямо здесь</h2>
+      <p>Добавьте пару заданий. Данные хранятся только на этой странице и пропадут после обновления.</p>
+      <div class="demo">
+        <form id="task-form">
+          <label>Дисциплина
+            <select id="f-subject" required>
+              <option>Информатика</option>
+              <option>Физика</option>
+              <option>Математический анализ</option>
+              <option>История России</option>
+              <option>Основы проектной деятельности</option>
+            </select>
+          </label>
+          <label>Что сдать
+            <input id="f-title" type="text" required maxlength="80" placeholder="Например, отчет по ЛР5">
+          </label>
+          <label>Срок сдачи
+            <input id="f-date" type="date" required>
+          </label>
+          <button class="btn" type="submit">Добавить задание</button>
+          <p class="hint">Ничего не отправляется на сервер.</p>
+        </form>
+        <div class="sheet">
+          <div class="filters" id="filters" role="group" aria-label="Фильтр по дисциплине"></div>
+          <ul class="tasks" id="task-list" aria-live="polite"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. План разработки -->
+  <section class="block alt" id="plan" aria-labelledby="plan-title">
+    <div class="wrap">
+      <h2 id="plan-title">План разработки</h2>
+      <p>Сервис делается как учебный проект. Этапы и сроки взяты с доски проекта.</p>
+      <ol class="timeline" id="timeline">
+        <li data-end="2026-10-09"><time>5–9 октября</time><b>Анализ предметной области и конкурентов</b></li>
+        <li data-end="2026-10-18"><time>8–18 октября</time><b>Сбор и анализ требований</b></li>
+        <li data-end="2026-10-25"><time>19–25 октября</time><b>Проектирование интерфейса и базы данных</b></li>
+        <li data-end="2026-11-15"><time>26 октября – 15 ноября</time><b>Разработка базовой версии</b></li>
+        <li data-end="2026-12-08"><time>16 ноября – 8 декабря</time><b>Календарь и напоминания</b></li>
+        <li data-end="2026-12-15"><time>1–15 декабря</time><b>Тестирование</b></li>
+        <li data-end="2026-12-17"><time>13–17 декабря</time><b>Публикация</b></li>
+        <li data-end="2026-12-21"><time>17–21 декабря</time><b>Сопровождение и сбор отзывов</b></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 7. Вопросы -->
+  <section class="block" id="faq" aria-labelledby="faq-title">
+    <div class="wrap">
+      <h2 id="faq-title">Частые вопросы</h2>
+      <details><summary>Задания подтянутся из личного кабинета сами?</summary><p>Нет. В первой версии задания добавляются вручную: так проще проверить, удобен ли сам список.</p></details>
+      <details><summary>Нужна ли регистрация?</summary><p>Для демо на этой странице – нет. В сервисе вход понадобится, чтобы список был доступен с телефона и ноутбука.</p></details>
+      <details><summary>Будет ли мобильное приложение?</summary><p>Пока нет. Сайт рассчитан на экраны от 360 пикселей, поэтому им удобно пользоваться с телефона.</p></details>
+      <details><summary>Это платно?</summary><p>Нет. Это учебный проект, он не продается и не собирает данные.</p></details>
+    </div>
+  </section>
+</main>
+
+<!-- 8. Подвал -->
+<footer>
+  <div class="wrap">
+    <span>Учебный демонстрационный проект, ГУАП, 2026. Не коммерческий сервис.</span>
+    <a href="#top">Наверх</a>
+  </div>
+</footer>
+
+<script>
+  // ---------- Даты и подсказка «осталось N дней» ----------
+  const DAY = 24 * 60 * 60 * 1000;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  function addDays(n) { const d = new Date(today); d.setDate(d.getDate() + n); return d; }
+  function toISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function daysLeft(d) { return Math.round((d - today) / DAY); }
+
+  // русское окончание: 1 день, 2 дня, 5 дней
+  function plural(n, one, few, many) {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+    return many;
+  }
+  function leftText(n) {
+    if (n < 0) return 'просрочено на ' + -n + ' ' + plural(-n, 'день', 'дня', 'дней');
+    if (n === 0) return 'сдать сегодня';
+    return 'осталось ' + n + ' ' + plural(n, 'день', 'дня', 'дней');
+  }
+  function leftClass(n) { return n < 0 ? 'left late' : n <= 3 ? 'left soon' : 'left'; }
+  const fmt = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
+
+  // ---------- Данные демо: живут только в памяти ----------
+  let tasks = [
+    { id: 1, subject: 'Информатика', title: 'Отчет по ЛР5 (Git)', date: addDays(2), done: false },
+    { id: 2, subject: 'Физика', title: 'Контрольная работа', date: addDays(6), done: false },
+    { id: 3, subject: 'История России', title: 'Задание к промежуточной аттестации', date: addDays(12), done: false },
+    { id: 4, subject: 'Информатика', title: 'Презентация по ЛР5 в СДО', date: addDays(-3), done: true },
+  ];
+  let nextId = 5;
+  let filter = 'Все';
+
+  // ---------- Главный экран: три ближайших срока ----------
+  function renderHero() {
+    const box = document.getElementById('hero-list');
+    const upcoming = tasks.filter(t => !t.done).sort((a, b) => a.date - b.date).slice(0, 3);
+    box.innerHTML = upcoming.map(t => {
+      const n = daysLeft(t.date);
+      return '<div class="deadline"><div><div>' + esc(t.title) + '</div><div class="subj">' + esc(t.subject) + '</div></div>' +
+             '<div><div class="' + leftClass(n) + '">' + leftText(n) + '</div><div class="date">' + fmt.format(t.date) + '</div></div></div>';
+    }).join('');
+  }
+
+  // ---------- Фильтры ----------
+  function renderFilters() {
+    const subjects = ['Все', ...new Set(tasks.map(t => t.subject))];
+    const box = document.getElementById('filters');
+    box.innerHTML = subjects.map(s => '<button type="button" class="chip" aria-pressed="' + (s === filter) + '">' + esc(s) + '</button>').join('');
+    box.querySelectorAll('.chip').forEach((b, i) => b.addEventListener('click', () => { filter = subjects[i]; render(); }));
+  }
+
+  // ---------- Список заданий ----------
+  function renderList() {
+    const list = document.getElementById('task-list');
+    const shown = tasks
+      .filter(t => filter === 'Все' || t.subject === filter)
+      .sort((a, b) => (a.done - b.done) || (a.date - b.date)); // невыполненные выше, затем по сроку
+    if (!shown.length) { list.innerHTML = '<li class="empty">Здесь пока пусто. Добавьте задание слева.</li>'; return; }
+    list.innerHTML = shown.map(t => {
+      const n = daysLeft(t.date);
+      return '<li class="task' + (t.done ? ' is-done' : '') + '">' +
+        '<input type="checkbox" data-id="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Сдано: ' + esc(t.title) + '">' +
+        '<div><div class="title">' + esc(t.title) + '</div><div class="meta">' + esc(t.subject) + ', до ' + fmt.format(t.date) + '</div></div>' +
+        '<div class="' + leftClass(n) + '">' + (t.done ? 'сдано' : leftText(n)) + '</div></li>';
+    }).join('');
+    list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', () => {
+      const t = tasks.find(x => x.id === Number(cb.dataset.id));
+      t.done = cb.checked; render();
+    }));
+  }
+
+  function render() { renderHero(); renderFilters(); renderList(); }
+
+  // защита от HTML в пользовательском вводе
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  // ---------- Форма добавления ----------
+  const dateInput = document.getElementById('f-date');
+  dateInput.value = toISO(addDays(7));
+  document.getElementById('task-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const title = document.getElementById('f-title').value.trim();
+    if (!title) return;
+    const [y, m, d] = dateInput.value.split('-').map(Number);
+    tasks.push({ id: nextId++, subject: document.getElementById('f-subject').value, title, date: new Date(y, m - 1, d), done: false });
+    e.target.reset();
+    dateInput.value = toISO(addDays(7));
+    render();
+  });
+
+  // ---------- План: отмечаем текущий этап ----------
+  (function markCurrentStage() {
+    const items = document.querySelectorAll('#timeline li');
+    for (const li of items) {
+      const [y, m, d] = li.dataset.end.split('-').map(Number);
+      if (new Date(y, m - 1, d) >= today) { li.classList.add('now'); break; }
+    }
+  })();
+
+  render();
+</script>
+</body>
+</html>
