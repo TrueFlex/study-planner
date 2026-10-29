@@ -4,7 +4,7 @@
 
 Лендинг веб-сервиса, который собирает задания по всем дисциплинам в один список со сроками сдачи. Учебный проект по курсу «Информатика» (ГУАП, 2026): лабораторные работы 4–6.
 
-**Сайт:** https://trueflex.github.io/study-planner/
+**Сайт:** https://trueflex.github.io/study-planner/ · копия на Vercel: https://study-planner-orcin-tau.vercel.app/
 
 ## Что на странице
 
@@ -31,6 +31,8 @@ Workflow `.github/workflows/deploy.yml` в GitHub Actions:
 2. `deploy` – после успешной проверки публикует сайт на GitHub Pages, только при push в `main`.
 
 Бейдж вверху показывает результат последнего запуска.
+
+Для сравнения тот же репозиторий подключен к Vercel (пресет Other): Vercel сам публикует каждый push в `main` без отдельного workflow.
 
 ## История работы
 
