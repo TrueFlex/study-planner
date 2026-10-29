@@ -149,6 +149,17 @@
   .task.is-done .left { color: var(--done); }
   .empty { color: var(--ink-soft); padding: 12px 0; }
   .status { margin: 12px 0 0; min-height: 1.5em; font-size: 15px; color: var(--ink-soft); }
+  /* полоса «Неделя» */
+  .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 14px; }
+  .day { font: inherit; display: grid; justify-items: center; gap: 2px; padding: 6px 0 8px; min-width: 0;
+         border: 2px solid var(--grid); border-radius: 8px; background: #fff; color: var(--ink); cursor: pointer; }
+  .day .dn { font-size: 12px; color: var(--ink-soft); }
+  .day .dd { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .day .dc { min-width: 22px; min-height: 20px; font-size: 12px; border-radius: 99px; text-align: center; }
+  .day.has .dc { background: var(--marker); font-weight: 700; color: var(--ink); }
+  .day.today { border-color: var(--margin-red); }
+  .day[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .day[aria-pressed="true"] .dn { color: #fff; }
 
   /* ---------- План разработки ---------- */
   .timeline { list-style: none; margin: 28px 0 0; padding: 0; border-left: 2px solid var(--margin-red); }
@@ -304,6 +315,8 @@
           <p class="hint">Ничего не отправляется на сервер.</p>
         </form>
         <div class="sheet">
+          <!-- неделя: семь дней с числом несданных заданий, нажатие на день оставляет только его задания -->
+          <div class="week" id="week" role="group" aria-label="Неделя: задания по дням"></div>
           <div class="filters" id="filters" role="group" aria-label="Фильтр по дисциплине"></div>
           <ul class="tasks" id="task-list"></ul>
           <!-- короткое сообщение о последнем действии: его видно и его читает экранный диктор -->
@@ -378,12 +391,14 @@
   // ---------- Данные демо: живут только в памяти ----------
   let tasks = [
     { id: 1, subject: 'Информатика', title: 'Отчет по ЛР5 (Git)', date: addDays(2), done: false },
+    { id: 5, subject: 'Информатика', title: 'Тест по разделу в СДО', date: addDays(1), done: false },
     { id: 2, subject: 'Физика', title: 'Контрольная работа', date: addDays(6), done: false },
     { id: 3, subject: 'История России', title: 'Задание к промежуточной аттестации', date: addDays(12), done: false },
     { id: 4, subject: 'Информатика', title: 'Презентация по ЛР5 в СДО', date: addDays(-3), done: true },
   ];
-  let nextId = 5;
+  let nextId = 6;
   let filter = 'Все';
+  let dayFilter = null; // выбранный день недели в виде ГГГГ-ММ-ДД или null
 
   // ---------- Главный экран: три ближайших срока ----------
   function renderHero() {
@@ -414,13 +429,46 @@
   // сообщение о результате действия
   function announce(text) { document.getElementById('demo-status').textContent = text; }
 
+  // ---------- Неделя: семь дней с числом несданных заданий ----------
+  const dayName = new Intl.DateTimeFormat('ru-RU', { weekday: 'short' });
+  function weekDays() {
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7)); // понедельник текущей недели
+    return Array.from({ length: 7 }, (_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return d; });
+  }
+  function renderWeek() {
+    const box = document.getElementById('week');
+    const days = weekDays();
+    box.innerHTML = days.map(d => {
+      const iso = toISO(d);
+      const n = tasks.filter(t => !t.done && toISO(t.date) === iso).length;
+      const label = dayName.format(d) + ', ' + fmt.format(d) + ': ' + (n ? 'заданий – ' + n : 'заданий нет');
+      return '<button type="button" class="day' + (n ? ' has' : '') + (iso === toISO(today) ? ' today' : '') +
+        '" data-day="' + iso + '" aria-pressed="' + (iso === dayFilter) + '" aria-label="' + label + '">' +
+        '<span class="dn">' + dayName.format(d) + '</span><span class="dd">' + d.getDate() + '</span>' +
+        '<span class="dc">' + (n || '') + '</span></button>';
+    }).join('');
+    box.querySelectorAll('.day').forEach((b, i) => b.addEventListener('click', () => {
+      const iso = b.dataset.day;
+      dayFilter = dayFilter === iso ? null : iso; // повторное нажатие снимает выбор
+      render();
+      box.querySelector('[data-day="' + iso + '"]').focus();
+      const count = document.querySelectorAll('#task-list .task').length;
+      announce(dayFilter ? 'Задания на ' + fmt.format(days[i]) + ': ' + count : 'Показаны задания на все дни');
+    }));
+  }
+
   // ---------- Список заданий ----------
   function renderList() {
     const list = document.getElementById('task-list');
     const shown = tasks
       .filter(t => filter === 'Все' || t.subject === filter)
+      .filter(t => !dayFilter || toISO(t.date) === dayFilter)
       .sort((a, b) => (a.done - b.done) || (a.date - b.date)); // невыполненные выше, затем по сроку
-    if (!shown.length) { list.innerHTML = '<li class="empty">Здесь пока пусто. Добавьте задание слева.</li>'; return; }
+    if (!shown.length) {
+      list.innerHTML = '<li class="empty">' + (dayFilter ? 'На этот день заданий нет.' : 'Здесь пока пусто. Добавьте задание слева.') + '</li>';
+      return;
+    }
     list.innerHTML = shown.map(t => {
       const n = daysLeft(t.date);
       return '<li class="task' + (t.done ? ' is-done' : '') + '">' +
@@ -440,7 +488,7 @@
     }));
   }
 
-  function render() { renderHero(); renderFilters(); renderList(); }
+  function render() { renderHero(); renderWeek(); renderFilters(); renderList(); }
 
   // защита от HTML в пользовательском вводе
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -457,6 +505,7 @@
     tasks.push(task);
     // если включен фильтр другой дисциплины, новое задание было бы скрыто
     if (filter !== 'Все' && filter !== task.subject) filter = 'Все';
+    if (dayFilter && dayFilter !== toISO(task.date)) dayFilter = null;
     e.target.reset();
     dateInput.value = toISO(addDays(7));
     render();
