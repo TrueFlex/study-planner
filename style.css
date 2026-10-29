@@ -1,0 +1,229 @@
+/* Стили лендинга «Учебный планировщик студента» */
+/* ---------- Цвета и размеры ---------- */
+:root {
+  --paper: #F7F9FC;      /* фон страницы */
+  --sheet: #FFFFFF;      /* лист тетради */
+  --grid: #E2E8F1;       /* клетка */
+  --ink: #1B2A41;        /* основной текст, «чернила» */
+  --ink-soft: #4A5A70;   /* второстепенный текст */
+  --margin-red: #E5484D; /* красные поля тетради, срочные сроки */
+  --marker: #FFE15A;     /* маркер-выделитель */
+  --done: #1F8A5B;       /* выполнено */
+  --radius: 10px;
+  --header-h: 64px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+}
+h1, h2, h3 { line-height: 1.15; margin: 0 0 .5em; }
+h2 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -.01em; }
+p { margin: 0 0 1em; max-width: 62ch; }
+a { color: inherit; }
+section { scroll-margin-top: calc(var(--header-h) + 16px); }
+.wrap { width: min(1120px, 100% - 40px); margin: 0 auto; }
+
+/* видимый фокус для клавиатуры */
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+
+/* ---------- Шапка ---------- */
+header {
+  position: sticky; top: 0; z-index: 10;
+  height: var(--header-h);
+  background: rgba(247, 249, 252, .92);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--grid);
+}
+header .wrap { display: flex; align-items: center; justify-content: space-between; height: 100%; gap: 16px; }
+.logo { font-weight: 800; text-decoration: none; font-size: 19px; white-space: nowrap; }
+.logo span { background: linear-gradient(transparent 55%, var(--marker) 55%); }
+nav ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; }
+nav a { text-decoration: none; font-size: 16px; color: var(--ink-soft); }
+nav a:hover { color: var(--ink); text-decoration: underline; }
+
+/* ---------- Кнопки ---------- */
+.btn {
+  display: inline-block; padding: 14px 22px; border-radius: var(--radius);
+  background: var(--ink); color: #fff; text-decoration: none; font-weight: 700;
+  border: 2px solid var(--ink); cursor: pointer; font-size: 17px;
+}
+.btn:hover { background: #26395A; }
+.btn-ghost { background: transparent; color: var(--ink); }
+.btn-ghost:hover { background: var(--sheet); }
+
+/* ---------- Лист тетради: главный мотив страницы ---------- */
+.sheet {
+  position: relative;
+  background-color: var(--sheet);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border-radius: var(--radius);
+  box-shadow: 0 1px 0 var(--grid), 0 12px 30px rgba(27, 42, 65, .08);
+  padding: 24px 24px 24px 72px;
+}
+.sheet::before { /* красные поля */
+  content: ""; position: absolute; top: 0; bottom: 0; left: 52px;
+  width: 2px; background: var(--margin-red); opacity: .75;
+}
+
+/* ---------- Главный экран ---------- */
+.hero { padding: 72px 0 56px; }
+.hero .wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
+.hero h1 { font-size: clamp(36px, 4.6vw, 56px); letter-spacing: -.02em; }
+.hero .lead { font-size: 21px; color: var(--ink-soft); }
+.hero .actions { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
+.sheet-title { font-weight: 800; margin-bottom: 12px; }
+.deadline { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 10px 0; border-bottom: 1px dashed var(--grid); }
+.deadline:last-child { border-bottom: 0; }
+.deadline .subj { font-size: 14px; color: var(--ink-soft); }
+.deadline .left { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+.deadline .date { font-size: 14px; color: var(--ink-soft); text-align: right; }
+/* фото на главном экране, лист со сроками заходит на него снизу */
+.hero-visual { position: relative; }
+.photo-hero img { aspect-ratio: 3 / 2; object-fit: cover; object-position: 50% 62%; }
+.hero-sheet { margin: -56px 0 0 28px; position: relative; }
+
+/* ---------- Фотографии ---------- */
+.photo { margin: 0; }
+.photo img { display: block; width: 100%; height: auto; border-radius: var(--radius); box-shadow: 0 12px 30px rgba(27, 42, 65, .12); }
+.photo figcaption { margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+/* подпись главного фото лежит на самом фото: снизу его перекрывает лист */
+.photo-hero { position: relative; }
+.photo-hero figcaption { position: absolute; top: 10px; right: 10px; margin: 0; padding: 2px 8px; border-radius: 6px; background: rgba(27, 42, 65, .7); color: #fff; }
+.left.soon { color: var(--margin-red); }
+.left.late { color: var(--margin-red); text-decoration: underline wavy; }
+
+/* ---------- Обычные секции ---------- */
+.block { padding: 72px 0; }
+.block.alt { background: var(--sheet); border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); }
+
+/* Проблема: три источника → один список */
+.sources { display: grid; grid-template-columns: repeat(3, 1fr) auto 1.2fr; gap: 16px; align-items: stretch; margin-top: 28px; }
+.arrow, .one-list { align-self: center; }
+.problem-top { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+.problem-top p { margin: 0; }
+.source { padding: 18px; border: 2px solid var(--grid); border-radius: var(--radius); background: var(--paper); }
+.source b { display: block; }
+.source small { color: var(--ink-soft); font-size: 15px; }
+.arrow { font-size: 34px; color: var(--ink-soft); text-align: center; }
+.one-list { padding: 18px; border-radius: var(--radius); background: var(--marker); font-weight: 700; }
+
+/* Возможности */
+.features { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; margin-top: 24px; padding: 0; list-style: none; }
+.features li { padding: 18px 0; border-top: 1px solid var(--grid); }
+.features h3 { font-size: 21px; margin-bottom: .25em; }
+.features p { margin: 0; color: var(--ink-soft); }
+.badge { font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--ink-soft); color: var(--ink-soft); margin-left: 8px; vertical-align: middle; }
+
+/* Как это работает: три шага */
+.steps { counter-reset: step; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 24px; padding: 0; list-style: none; }
+.steps li { counter-increment: step; }
+.steps li::before {
+  content: counter(step); display: inline-grid; place-items: center;
+  width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--ink);
+  font-weight: 800; margin-bottom: 12px;
+}
+.steps h3 { font-size: 21px; }
+.steps p { color: var(--ink-soft); }
+/* рядом с фото шаги идут столбиком: номер слева, текст справа */
+.how-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 48px; align-items: center; margin-top: 24px; }
+.how-grid .steps { grid-template-columns: 1fr; gap: 22px; margin: 0; }
+.how-grid .steps li { display: grid; grid-template-columns: 44px 1fr; column-gap: 16px; }
+.how-grid .steps li::before { grid-row: span 2; margin: 0; }
+.how-grid .steps h3 { margin: 8px 0 4px; }
+.how-grid .steps p { margin: 0; }
+
+/* ---------- Демо ---------- */
+.demo { display: grid; grid-template-columns: 340px 1fr; gap: 32px; margin-top: 28px; align-items: start; }
+.demo form { display: grid; gap: 14px; padding: 22px; background: var(--paper); border: 2px solid var(--grid); border-radius: var(--radius); }
+label { font-weight: 700; font-size: 15px; display: grid; gap: 6px; }
+input, select {
+  font: inherit; font-size: 17px; padding: 10px 12px; border-radius: 8px;
+  border: 2px solid #C5CFDD; background: #fff; color: var(--ink); width: 100%;
+}
+.hint { font-size: 14px; color: var(--ink-soft); margin: 0; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.chip { font: inherit; font-size: 15px; padding: 6px 12px; border-radius: 99px; border: 2px solid var(--grid); background: #fff; cursor: pointer; color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.tasks { list-style: none; margin: 0; padding: 0; }
+.task { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--grid); }
+.task input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--done); }
+.task .title { font-weight: 700; }
+.task .meta { font-size: 14px; color: var(--ink-soft); }
+.task.is-done .title { text-decoration: line-through; color: var(--ink-soft); }
+.task.is-done .left { color: var(--done); }
+.empty { color: var(--ink-soft); padding: 12px 0; }
+.status { margin: 12px 0 0; min-height: 1.5em; font-size: 15px; color: var(--ink-soft); }
+/* полоса «Неделя» */
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 14px; }
+.day { font: inherit; display: grid; justify-items: center; gap: 2px; padding: 6px 0 8px; min-width: 0;
+       border: 2px solid var(--grid); border-radius: 8px; background: #fff; color: var(--ink); cursor: pointer; }
+.day .dn { font-size: 12px; color: var(--ink-soft); }
+.day .dd { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.day .dc { min-width: 22px; min-height: 20px; font-size: 12px; border-radius: 99px; text-align: center; }
+.day.has .dc { background: var(--marker); font-weight: 700; color: var(--ink); }
+.day.today { border-color: var(--margin-red); }
+.day[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.day[aria-pressed="true"] .dn { color: #fff; }
+
+/* ---------- План разработки ---------- */
+.timeline { list-style: none; margin: 28px 0 0; padding: 0; border-left: 2px solid var(--margin-red); }
+.timeline li { position: relative; padding: 0 0 22px 28px; }
+.timeline li::before { content: ""; position: absolute; left: -8px; top: 6px; width: 14px; height: 14px; border-radius: 50%; background: var(--sheet); border: 2px solid var(--margin-red); }
+.timeline li.now::before { background: var(--margin-red); }
+.timeline time { display: block; font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.timeline b { font-size: 19px; }
+
+/* ---------- Вопросы ---------- */
+details { border-top: 1px solid var(--grid); padding: 16px 0; max-width: 760px; }
+details:last-of-type { border-bottom: 1px solid var(--grid); }
+summary { font-weight: 700; cursor: pointer; font-size: 19px; }
+details p { margin: 10px 0 0; color: var(--ink-soft); }
+
+/* ---------- Подвал ---------- */
+footer { padding: 40px 0; font-size: 15px; color: var(--ink-soft); }
+footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+footer .deployed { display: inline-block; margin-top: 6px; color: var(--done); }
+
+/* ---------- Адаптивность ---------- */
+@media (max-width: 900px) {
+  /* меню не прячем: оно уходит второй строкой под логотип и прокручивается вбок */
+  :root { --header-h: 96px; }
+  header .wrap { flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; }
+  nav { width: 100%; overflow-x: auto; scrollbar-width: none; }
+  nav ul { gap: 14px; padding-bottom: 4px; }
+  nav a { white-space: nowrap; font-size: 15px; }
+  .hero .wrap, .demo { grid-template-columns: 1fr; }
+  .sources { grid-template-columns: 1fr; }
+  .arrow { transform: rotate(90deg); }
+  .features, .steps { grid-template-columns: 1fr; }
+  .problem-top, .how-grid { grid-template-columns: 1fr; gap: 24px; }
+  /* на планшете фото главного экрана не должно занимать весь экран */
+  .photo-hero img { aspect-ratio: 16 / 9; max-height: 360px; }
+}
+@media (max-width: 480px) {
+  body { font-size: 17px; }
+  .sheet { padding: 18px 16px 18px 48px; }
+  .sheet::before { left: 34px; }
+  .hero { padding-top: 40px; }
+  .hero-sheet { margin: -32px 10px 0; }
+  /* в строке задания срок переносим под название, чтобы слова не дробились */
+  .task { grid-template-columns: auto 1fr; align-items: start; }
+  .task .left { grid-column: 2; text-align: left; font-size: 15px; }
+}
+/* новое задание коротко подсвечивается маркером */
+.task.is-new { animation: marker 2s ease-out; }
+@keyframes marker { from { background: var(--marker); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .task.is-new { animation: none; background: rgba(255, 225, 90, .45); }
+}
