@@ -147,6 +147,7 @@
   .task.is-done .title { text-decoration: line-through; color: var(--ink-soft); }
   .task.is-done .left { color: var(--done); }
   .empty { color: var(--ink-soft); padding: 12px 0; }
+  .status { margin: 12px 0 0; min-height: 1.5em; font-size: 15px; color: var(--ink-soft); }
 
   /* ---------- План разработки ---------- */
   .timeline { list-style: none; margin: 28px 0 0; padding: 0; border-left: 2px solid var(--margin-red); }
@@ -291,7 +292,9 @@
         </form>
         <div class="sheet">
           <div class="filters" id="filters" role="group" aria-label="Фильтр по дисциплине"></div>
-          <ul class="tasks" id="task-list" aria-live="polite"></ul>
+          <ul class="tasks" id="task-list"></ul>
+          <!-- короткое сообщение о последнем действии: его видно и его читает экранный диктор -->
+          <p class="status" id="demo-status" role="status"></p>
         </div>
       </div>
     </div>
@@ -385,8 +388,18 @@
     const subjects = ['Все', ...new Set(tasks.map(t => t.subject))];
     const box = document.getElementById('filters');
     box.innerHTML = subjects.map(s => '<button type="button" class="chip" aria-pressed="' + (s === filter) + '">' + esc(s) + '</button>').join('');
-    box.querySelectorAll('.chip').forEach((b, i) => b.addEventListener('click', () => { filter = subjects[i]; render(); }));
+    box.querySelectorAll('.chip').forEach((b, i) => b.addEventListener('click', () => {
+      filter = subjects[i];
+      render();
+      // после перерисовки возвращаем фокус на выбранный фильтр, иначе он уходит в начало страницы
+      box.querySelector('.chip[aria-pressed="true"]').focus();
+      const count = document.querySelectorAll('#task-list .task').length;
+      announce((filter === 'Все' ? 'Показаны все задания: ' : filter + ': ') + count);
+    }));
   }
+
+  // сообщение о результате действия
+  function announce(text) { document.getElementById('demo-status').textContent = text; }
 
   // ---------- Список заданий ----------
   function renderList() {
@@ -403,8 +416,14 @@
         '<div class="' + leftClass(n) + '">' + (t.done ? 'сдано' : leftText(n)) + '</div></li>';
     }).join('');
     list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', () => {
-      const t = tasks.find(x => x.id === Number(cb.dataset.id));
-      t.done = cb.checked; render();
+      const id = Number(cb.dataset.id);
+      const t = tasks.find(x => x.id === id);
+      t.done = cb.checked;
+      render();
+      // задание переехало в списке: возвращаем фокус на его флажок
+      const again = document.querySelector('#task-list input[data-id="' + id + '"]');
+      if (again) again.focus();
+      announce(t.done ? 'Отмечено как сданное: ' + t.title : 'Снова в работе: ' + t.title);
     }));
   }
 
@@ -421,10 +440,12 @@
     const title = document.getElementById('f-title').value.trim();
     if (!title) return;
     const [y, m, d] = dateInput.value.split('-').map(Number);
-    tasks.push({ id: nextId++, subject: document.getElementById('f-subject').value, title, date: new Date(y, m - 1, d), done: false });
+    const task = { id: nextId++, subject: document.getElementById('f-subject').value, title, date: new Date(y, m - 1, d), done: false };
+    tasks.push(task);
     e.target.reset();
     dateInput.value = toISO(addDays(7));
     render();
+    announce('Добавлено: ' + task.title + ', срок ' + fmt.format(task.date));
   });
 
   // ---------- План: отмечаем текущий этап ----------
