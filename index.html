@@ -199,6 +199,7 @@
   /* ---------- Подвал ---------- */
   footer { padding: 40px 0; font-size: 15px; color: var(--ink-soft); }
   footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  footer .deployed { display: inline-block; margin-top: 6px; color: var(--done); }
 
   /* ---------- Адаптивность ---------- */
   @media (max-width: 900px) {
@@ -213,6 +214,8 @@
     .arrow { transform: rotate(90deg); }
     .features, .steps { grid-template-columns: 1fr; }
     .problem-top, .how-grid { grid-template-columns: 1fr; gap: 24px; }
+    /* на планшете фото главного экрана не должно занимать весь экран */
+    .photo-hero img { aspect-ratio: 16 / 9; max-height: 360px; }
   }
   @media (max-width: 480px) {
     body { font-size: 17px; }
@@ -404,7 +407,8 @@
 <!-- 8. Подвал -->
 <footer>
   <div class="wrap">
-    <span>Учебный демонстрационный проект, ГУАП, 2026. Не коммерческий сервис. Фотографии: Pexels, бесплатная лицензия.</span>
+    <span>Учебный демонстрационный проект, ГУАП, 2026. Не коммерческий сервис. Фотографии: Pexels, бесплатная лицензия.<br>
+      <b class="deployed">Сайт публикуется автоматически через GitHub Actions.</b></span>
     <a href="#top">Наверх</a>
   </div>
 </footer>
